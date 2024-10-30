@@ -1,11 +1,26 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './modules/prisma/prisma.module';
+import { SequelizeModule } from '@nestjs/sequelize';
 import { LoggerModule } from './modules/logger/logger.module';
 import { AccountModule } from './modules/account/account.module';
-import { TransactionModule } from './modules/transaction/transaction.module';
+import { Account } from './modules/sequelize/models/account.model';
+import { Transaction } from './modules/sequelize/models/transaction.model';
 
 @Module({
-  imports: [PrismaModule, LoggerModule, AccountModule, TransactionModule],
+  imports: [
+    SequelizeModule.forRoot({
+      dialect: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'Password@16',
+      database: 'desafio',
+      models: [Account, Transaction],
+      autoLoadModels: true,
+      synchronize: true,
+    }),
+    LoggerModule,
+    AccountModule,
+  ],
   controllers: [],
   providers: [],
 })

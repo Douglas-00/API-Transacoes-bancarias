@@ -1,26 +1,24 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import { PrismaService } from 'src/modules/prisma/prisma.service';
-import { CreateAccountRequestDto } from '../infra/dto/create/request.dto';
-import { CreateAccountResponseDto } from '../infra/dto/create/response.dto';
+import { Sequelize } from 'sequelize-typescript';
+import { CreateAccountsRequestDto } from '../infra/dto/create/request.dto';
 import { AppLogger } from 'src/modules/logger/logger.service';
+import { Account } from 'src/modules/sequelize/models/account.model';
+import { Transaction } from 'src/modules/sequelize/models/transaction.model';
 
 @Injectable()
 export class CreateAccountUseCase {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly sequelize: Sequelize,
     private readonly logger: AppLogger,
   ) {}
 
-  async execute(
-    payload: CreateAccountRequestDto[],
-  ): Promise<CreateAccountResponseDto> {
-    const accountNumbers = payload.map((account) => account.number);
+  async execute(payload: CreateAccountsRequestDto): Promise<any> {
+    const accountNumbers = payload.accounts.map((account) => account.number);
 
-    const existingAccounts = await this.prisma.account.findMany({
+    // Verifica se já existem contas com os números fornecidos
+    const existingAccounts = await Account.findAll({
       where: {
-        number: {
-          in: accountNumbers,
-        },
+        number: accountNumbers,
       },
     });
 
@@ -35,17 +33,114 @@ export class CreateAccountUseCase {
     }
 
     try {
-      const result = await this.prisma.account.createMany({
-        data: payload,
+      await this.sequelize.transaction(async (transaction) => {
+        const accounts = await Account.bulkCreate(payload.accounts, {
+          transaction,
+          returning: true,
+        });
+
+        this.logger.log(`Contas: ${accounts.length} criadas com sucesso`);
+
+        const accountMap = new Map(
+          accounts.map((account) => [account.number, account]),
+        );
+
+        // Executa as transações
+        for (const transacao of payload.transactions) {
+          const { type, accountId, amount, destinyId } = transacao;
+          const origem = accountMap.get(accountId);
+
+          if (!origem) {
+            throw new ConflictException(`Conta ${accountId} não encontrada`);
+          }
+
+          if (type === 'DEPOSIT') {
+            // Realiza o depósito
+            origem.balance += amount;
+            await origem.save({ transaction });
+
+            // Cria a transação de depósito
+            await Transaction.create(
+              {
+                type: 'DEPOSIT',
+                amount: amount,
+                accountId: origem.id,
+              },
+              { transaction },
+            );
+
+            this.logger.log(`Depósito de ${amount} na conta ${accountId}`);
+          } else if (type === 'WITHDRAW') {
+            if (origem.balance < amount) {
+              throw new ConflictException(
+                `Saldo insuficiente na conta ${accountId}`,
+              );
+            }
+
+            // Realiza o saque
+            origem.balance -= amount;
+            await origem.save({ transaction });
+
+            // Cria a transação de saque
+            await Transaction.create(
+              {
+                type: 'WITHDRAW',
+                amount: amount,
+                accountId: origem.id,
+              },
+              { transaction },
+            );
+
+            this.logger.log(`Saque de ${amount} da conta ${accountId}`);
+          } else if (type === 'TRANSFER') {
+            if (!destinyId) {
+              throw new ConflictException(
+                'Destino é obrigatório para transferência',
+              );
+            }
+
+            const destinoAccount = accountMap.get(destinyId);
+            if (!destinoAccount) {
+              throw new ConflictException(
+                `Conta de destino ${destinyId} não encontrada`,
+              );
+            }
+
+            if (origem.balance < amount) {
+              throw new ConflictException(
+                `Saldo insuficiente na conta ${accountId} para transferência`,
+              );
+            }
+
+            // Realiza a transferência
+            origem.balance -= amount;
+            destinoAccount.balance += amount;
+            await origem.save({ transaction });
+            await destinoAccount.save({ transaction });
+
+            // Cria a transação de transferência
+            await Transaction.create(
+              {
+                type: 'TRANSFER',
+                amount: amount,
+                accountId: origem.id,
+                destinoId: destinoAccount.id,
+              },
+              { transaction },
+            );
+
+            this.logger.log(
+              `Transferência de ${amount} da conta ${accountId} para a conta ${destinyId}`,
+            );
+          }
+        }
+
+        return {
+          message: 'Contas e transações processadas com sucesso!',
+        };
       });
-
-      this.logger.log(`Contas: ${result.count} criadas com sucesso`);
-
-      return {
-        message: 'Accounts created successfully!',
-      };
     } catch (error) {
-      this.logger.error(`Erro ao criar conta: ${error.message}`);
+      this.logger.error(`Erro no processamento: ${error.message}`);
       throw error;
     }
   }

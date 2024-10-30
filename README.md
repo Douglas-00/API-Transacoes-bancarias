@@ -1,99 +1,159 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Desafio API Transações
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Este é um projeto de API de um sistema bancário desenvolvido com NestJS e Prisma, projetado para gerenciar transações bancárias, incluindo depósito, saque e transferência entre contas. Ele suporta múltiplas transações concorrentes, garantindo a integridade do saldo das contas.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Pré-requisitos
 
-## Description
+Antes de começar, você precisa ter instalado:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- [Node.js](https://nodejs.org/en/download/)
+- [MySQL](https://dev.mysql.com/downloads/installer/)
+- [Git](https://git-scm.com/downloads)
 
-## Project setup
+## Instalação
+
+Siga os passos abaixo para configurar o projeto localmente:
+
+### 1. Clone o repositório
+
+Abra o terminal e execute o comando:
 
 ```bash
-$ npm install
+git clone https://github.com/seu-usuario/seu-repositorio.git
 ```
 
-## Compile and run the project
+### 2. Navegue até o diretório do projeto
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd seu-repositorio
 ```
 
-## Run tests
+### 3. Instale as dependências
+
+Use o npm ou o yarn para instalar as dependências do projeto:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+# ou
+yarn install
 ```
 
-## Deployment
+### 4. Configure o banco de dados
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. Crie um banco de dados no MySQL chamado `banco_transacoes`.
+2. Configure a variável de ambiente `DATABASE_URL` no arquivo `.env`, localizado na raiz do projeto:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+   ```
+   DATABASE_URL="mysql://usuario:senha@localhost:3306/banco_transacoes"
+   ```
+
+   Substitua `usuario`, `senha` e `banco_transacoes` pelas informações correspondentes ao seu banco de dados MySQL.
+
+### 5. Executar Migrações do Prisma
+
+Para criar as tabelas no banco de dados, execute:
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+npx prisma migrate dev --name init
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Isso criará a estrutura inicial das tabelas no banco de dados, conforme definido no arquivo `schema.prisma`.
 
-## Resources
+### 6. Gerar o Client do Prisma
 
-Check out a few resources that may come in handy when working with NestJS:
+Gere o client Prisma para interagir com o banco de dados:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npx prisma generate
+```
 
-## Support
+### 7. Iniciar o Servidor
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Após configurar o banco de dados e o Prisma, inicie o servidor NestJS:
 
-## Stay in touch
+```bash
+npm run start
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+A API estará rodando em [http://localhost:3000](http://localhost:3000).
 
-## License
+## Rotas da API
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Abaixo estão as principais rotas para criar contas e realizar transações:
+
+### 1. Criar uma Conta
+
+- **Endpoint**: `POST /account`
+- **Exemplo de Requisição**:
+
+  ```json
+  {
+    "number": "123456",
+    "initialBalance": 1000
+  }
+  ```
+
+- **Resposta Esperada**:
+  ```json
+  {
+    "id": 1,
+    "statusCode": 201,
+    "message": "Account created successfully!"
+  }
+  ```
+
+### 2. Criar uma Transação
+
+- **Endpoint**: `POST /transaction`
+- **Exemplo de Requisição**:
+
+  ```json
+  {
+    "type": "DEPOSIT",
+    "amount": 500,
+    "accountId": 1
+  }
+  ```
+
+- **Resposta Esperada**:
+  ```json
+  {
+    "id": 1,
+    "statusCode": 201,
+    "message": "Transaction processed successfully!"
+  }
+  ```
+
+### Testes de Concorrência
+
+Para simular transações concorrentes, você pode usar ferramentas como [Postman](https://www.postman.com/downloads/) ou [Artillery](https://artillery.io/).
+
+### 8. Executar Testes Automatizados
+
+Para rodar testes automatizados (se houver), use:
+
+```bash
+npm run test
+```
+
+## Ferramentas e Tecnologias Utilizadas
+
+- **NestJS**: Framework para construção de aplicações Node.js escaláveis.
+- **Prisma**: ORM moderno para interagir com o banco de dados.
+- **MySQL**: Banco de dados relacional.
+- **TypeScript**: Superset do JavaScript para desenvolvimento com tipagem estática.
+
+## Contribuição
+
+Sinta-se à vontade para contribuir com este projeto. Faça um fork, crie uma branch e envie um pull request com suas melhorias!
+
+## Contato
+
+Em caso de dúvidas ou sugestões, entre em contato:
+
+- Email: seu-email@example.com
+- GitHub: [seu-usuario](https://github.com/seu-usuario)
+
+## Licença
+
+Este projeto está sob a licença MIT.
