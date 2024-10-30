@@ -22,7 +22,6 @@ export class CreateAccountController {
   async createAccount(
     @Body() payload: CreateAccountsRequestDto,
   ): Promise<CreateAccountResponseDto> {
-    console.log(payload);
     return await this.useCase.execute(payload);
   }
 }
