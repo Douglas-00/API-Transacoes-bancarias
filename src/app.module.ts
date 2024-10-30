@@ -4,16 +4,19 @@ import { LoggerModule } from './modules/logger/logger.module';
 import { AccountModule } from './modules/account/account.module';
 import { Account } from './modules/sequelize/models/account.model';
 import { Transaction } from './modules/sequelize/models/transaction.model';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
   imports: [
     SequelizeModule.forRoot({
       dialect: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'Password@16',
-      database: 'desafio',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       models: [Account, Transaction],
       autoLoadModels: true,
       synchronize: true,
