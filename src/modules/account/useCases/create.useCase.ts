@@ -12,34 +12,37 @@ export class CreateAccountUseCase {
   ) {}
 
   async execute(
-    payload: CreateAccountRequestDto,
+    payload: CreateAccountRequestDto[],
   ): Promise<CreateAccountResponseDto> {
-    const number = payload.number;
-    const balance = payload.balance;
+    const accountNumbers = payload.map((account) => account.number);
 
-    this.logger.debug(`Iniciando criação de conta para: ${number}`);
-
-    const existingAccount = await this.prisma.account.findUnique({
-      where: { number: number },
+    const existingAccounts = await this.prisma.account.findMany({
+      where: {
+        number: {
+          in: accountNumbers,
+        },
+      },
     });
 
-    if (existingAccount) {
-      this.logger.warn(`Conta com número ${number} já existe`);
-      throw new ConflictException('Account with this number already exists');
+    if (existingAccounts.length > 0) {
+      const existingNumbers = existingAccounts
+        .map((account) => account.number)
+        .join(', ');
+      this.logger.warn(`Contas com números ${existingNumbers} já existem`);
+      throw new ConflictException(
+        `Accounts with numbers ${existingNumbers} already exist`,
+      );
     }
 
     try {
-      const account = await this.prisma.account.create({
-        data: {
-          number: number,
-          balance: balance,
-        },
+      const result = await this.prisma.account.createMany({
+        data: payload,
       });
 
-      this.logger.log(`Conta criada com ID: ${account.id}`);
+      this.logger.log(`Contas: ${result.count} criadas com sucesso`);
 
       return {
-        message: 'Account created successfully!',
+        message: 'Accounts created successfully!',
       };
     } catch (error) {
       this.logger.error(`Erro ao criar conta: ${error.message}`);
