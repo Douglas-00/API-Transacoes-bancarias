@@ -118,28 +118,6 @@ Esta API possui uma única rota para gerenciar tanto a criação de contas quant
   }
   ```
 
-### 2. Criar uma Transação
-
-- **Endpoint**: `POST /transaction`
-- **Exemplo de Requisição**:
-
-  ```json
-  {
-    "type": "DEPOSIT",
-    "amount": 500,
-    "accountId": 1
-  }
-  ```
-
-- **Resposta Esperada**:
-  ```json
-  {
-    "id": 1,
-    "statusCode": 201,
-    "message": "Transaction processed successfully!"
-  }
-  ```
-
 ### Testes de Concorrência
 
 Para simular transações concorrentes, você pode usar ferramentas como [Postman], criei um teste com o K6.
