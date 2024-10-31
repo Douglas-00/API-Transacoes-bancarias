@@ -35,62 +35,55 @@ export class CreateAccountUseCase {
     }
 
     try {
-      await this.sequelize.transaction(
-        {
-          isolationLevel: 'SERIALIZABLE' as any,
-        },
-        async (transaction) => {
-          const accounts = await Account.bulkCreate(payload.accounts, {
-            transaction,
-            returning: true,
-          });
+      await this.sequelize.transaction(async (transaction) => {
+        const accounts = await Account.bulkCreate(payload.accounts, {
+          transaction,
+          returning: true,
+        });
 
-          this.logger.log(`Contas criadas :${accounts.length}`);
+        this.logger.log(`Contas criadas :${accounts.length}`);
 
-          for (const transacao of payload.transactions) {
-            const { type, accountId, amount, destinyId } = transacao;
-            const origem = await this.lockAccount(accountId, transaction);
+        for (const transacao of payload.transactions) {
+          const { type, accountId, amount, destinyId } = transacao;
+          const origem = await this.lockAccount(accountId, transaction);
 
-            if (!origem) {
-              this.logger.warn(`Conta ${accountId} não encontrada`);
-              throw new ConflictException(`Account ${accountId} not found`);
-            }
-
-            if (type === 'DEPOSIT') {
-              await this.handleDeposit(origem, amount, transaction);
-            } else if (type === 'WITHDRAW') {
-              await this.handleWithdraw(origem, amount, transaction);
-            } else if (type === 'TRANSFER') {
-              if (!destinyId) {
-                this.logger.warn(`Conta de é obrigatório para transferência`);
-                throw new ConflictException(
-                  'Destination is mandatory for transfer',
-                );
-              }
-
-              const destinoAccount = await this.lockAccount(
-                destinyId,
-                transaction,
-              );
-              if (!destinoAccount) {
-                this.logger.warn(
-                  `Conta de destino ${accountId} não encontrada`,
-                );
-                throw new ConflictException(
-                  `Destination account ${destinyId} not found`,
-                );
-              }
-
-              await this.handleTransfer(
-                origem,
-                destinoAccount,
-                amount,
-                transaction,
-              );
-            }
+          if (!origem) {
+            this.logger.warn(`Conta ${accountId} não encontrada`);
+            throw new ConflictException(`Account ${accountId} not found`);
           }
-        },
-      );
+
+          if (type === 'DEPOSIT') {
+            await this.handleDeposit(origem, amount, transaction);
+          } else if (type === 'WITHDRAW') {
+            await this.handleWithdraw(origem, amount, transaction);
+          } else if (type === 'TRANSFER') {
+            if (!destinyId) {
+              this.logger.warn(`Conta de é obrigatório para transferência`);
+              throw new ConflictException(
+                'Destination is mandatory for transfer',
+              );
+            }
+
+            const destinoAccount = await this.lockAccount(
+              destinyId,
+              transaction,
+            );
+            if (!destinoAccount) {
+              this.logger.warn(`Conta de destino ${accountId} não encontrada`);
+              throw new ConflictException(
+                `Destination account ${destinyId} not found`,
+              );
+            }
+
+            await this.handleTransfer(
+              origem,
+              destinoAccount,
+              amount,
+              transaction,
+            );
+          }
+        }
+      });
       return {
         message: 'Accounts and transactions processed successfully!',
       };
