@@ -19,7 +19,7 @@ Siga os passos abaixo para configurar o projeto localmente:
 Abra o terminal e execute o comando:
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
+git clone https://github.com/Douglas-00/Desafio-grupo-primo.git
 ```
 
 ### 2. Navegue até o diretório do projeto
